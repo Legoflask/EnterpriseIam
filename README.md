@@ -32,7 +32,7 @@ Ensure you have the following engine runtimes running locally:
 
 2. **Establish Environment Configurations:**
    Create a local .env file in the root workspace folder to feed application strings safely to Docker:
-   MSSQL_SA_PASSWORD=YourStrongSecurePassword123!
+   MSSQL_SA_PASSWORD=YOUR_STRONG_PASSWORD_HERE
 
 3. **Orchestrate and Run:**
    Execute the isolated cleaner build command directly within your shell window:
