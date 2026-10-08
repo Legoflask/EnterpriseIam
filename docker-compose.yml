@@ -1,0 +1,47 @@
+﻿services:
+  # 🗄️ Node 1: Fully virtualized Linux SQL Server Instance
+  database:
+    image: ://microsoft.com
+    container_name: enterprise_iam_db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=\
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+  # ⚡ Node 2: Your .NET 10 Ingestion Gateway
+  api-gateway:
+    image: enterprise-iam-gateway
+    container_name: net10_api_gateway
+    build:
+      context: .
+      dockerfile: WebApi/Dockerfile
+    ports:
+      - "5069:5069"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5069
+      - ConnectionStrings__DefaultConnection=Server=database;Database=EnterpriseIamDb;User Id=sa;Password=\;TrustServerCertificate=True;
+    depends_on:
+      - database
+
+  # 🐍 Node 3: Your Python FastAPI Document Extraction Worker
+  document-worker:
+    image: enterprise-document-worker
+    container_name: fastapi_document_worker
+    build:
+      context: ./DocumentWorker
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_SERVER=database
+      - DB_NAME=EnterpriseIamDb
+    depends_on:
+      - database
+
+volumes:
+  mssql_data:

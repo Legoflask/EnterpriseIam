@@ -1,0 +1,16 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY EnterpriseIam.slnx .
+COPY Core/*.csproj ./Core/
+COPY Infrastructure/*.csproj ./Infrastructure/
+COPY WebAPI/*.csproj ./WebAPI/
+RUN dotnet restore WebAPI/WebAPI.csproj
+COPY . .
+WORKDIR /src/WebAPI
+RUN dotnet publish -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+EXPOSE 5069
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "WebAPI.dll"]

@@ -1,0 +1,39 @@
+﻿# User Secrets & Environment Tokens
+.env
+.env.*
+!.env.example
+
+# .NET / C# Build Artifacts
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Python / FastAPI Runtime Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Docker Data & Volume Local Mounts
+.docker/
+mssql_data/
+
+# IDE Configuration Files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+
+# Visual Studio Solution Cache
+.vs/
