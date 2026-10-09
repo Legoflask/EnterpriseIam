@@ -30,11 +30,18 @@ The platform consists of three independent services running in Docker containers
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/EnterpriseIam.git
+git clone https://github.com/Legoflask/EnterpriseIam.git
 cd EnterpriseIam
 ```
 
-### 2. Start the Stack
+### 2. Configure Environment
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set `MSSQL_SA_PASSWORD` to a strong password. Never commit `.env` to Git.
+
+### 3. Start the Stack
 ```bash
 docker compose up -d --pull always
 ```
@@ -66,7 +73,7 @@ curl -X POST "http://localhost:5069/api/auth/register-tenant" \
   -d '{
     "TenantName": "Acme Corp",
     "AdminEmail": "admin@acme.local",
-    "Password": "SecurePass@123"
+    "Password": "YourSecurePassword@123"
   }'
 ```
 
@@ -76,7 +83,7 @@ curl -X POST "http://localhost:5069/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{
     "Email": "admin@acme.local",
-    "Password": "SecurePass@123"
+    "Password": "YourSecurePassword@123"
   }'
 ```
 
@@ -202,9 +209,27 @@ ports:
   - "5069:5069"  # Change first number to unused port
 ```
 
-## Development
+## Security
 
-### Building Local Images
+### Environment Variables
+- Never commit `.env` files to Git (already in `.gitignore`)
+- Use `.env.example` as a template for developers
+- Change `MSSQL_SA_PASSWORD` in production
+- Use strong passwords (minimum 12 characters, mixed case, numbers, symbols)
+
+### Production Deployment
+- Change default credentials before deploying
+- Use Docker secrets or external secret management (AWS Secrets Manager, Azure Key Vault)
+- Enable HTTPS/TLS
+- Restrict database port access
+- Use network policies to isolate containers
+
+### Development
+- Default password: `YourStrong@Password123` (for local use only)
+- Never expose API keys or tokens in code
+- Use JWT tokens with short expiration times
+
+
 ```bash
 docker compose build --no-cache
 ```
