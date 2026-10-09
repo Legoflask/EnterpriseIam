@@ -1,11 +1,11 @@
 ﻿services:
   # 🗄️ Node 1: Fully virtualized Linux SQL Server Instance
   database:
-    image: ://microsoft.com
+    image: mcr.microsoft.com/mssql/server:latest
     container_name: enterprise_iam_db
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=\
+      - MSSQL_SA_PASSWORD=YourStrong@Password123
       - MSSQL_PID=Developer
     ports:
       - "1433:1433"
@@ -18,13 +18,13 @@
     container_name: net10_api_gateway
     build:
       context: .
-      dockerfile: WebApi/Dockerfile
+      dockerfile: WebAPI/DockerFile
     ports:
       - "5069:5069"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5069
-      - ConnectionStrings__DefaultConnection=Server=database;Database=EnterpriseIamDb;User Id=sa;Password=\;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=database;Database=EnterpriseIamDb;User Id=sa;Password=YourStrong@Password123;TrustServerCertificate=True;
     depends_on:
       - database
 
@@ -40,8 +40,10 @@
     environment:
       - DB_SERVER=database
       - DB_NAME=EnterpriseIamDb
+      - TrustServerCertificate=yes
     depends_on:
       - database
 
 volumes:
   mssql_data:
+
