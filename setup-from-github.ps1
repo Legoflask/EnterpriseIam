@@ -2,7 +2,7 @@
 # Clones repo, sets up Docker, and runs the stack
 
 param(
-    [string]$GitHubUrl = "https://github.com/YOUR_USERNAME/EnterpriseIam.git",
+    [string]$GitHubUrl = "https://github.com/Legoflask/EnterpriseIam.git",
     [string]$Branch = "main"
 )
 
