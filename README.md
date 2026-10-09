@@ -1,45 +1,241 @@
-﻿# Enterprise Multi-Tenant IAM & Document Extraction Engine
+# Enterprise IAM - Multi-Tenant Document Extraction Platform
 
-A high-performance, containerised multi-service ecosystem architecture using modern web patterns. This workspace manages secure tenant-isolated user access while running native background document workers.
+A production-ready, containerized multi-service platform for secure tenant isolation, user authentication, and automated document processing.
 
 ## System Architecture
 
-The environment relies on three tightly decoupled application layers deployed within a unified container network:
+The platform consists of three independent services running in Docker containers:
 
-1. **EnterpriseIam Gateways (.NET 10 Web API):** Manages metadata configurations, system pipelines, and secure user spaces. Utilises EF Core with a dynamic global query filter that attaches a target TenantId to incoming database threads automatically.
-2. **DocumentWorker Node (Python 3.12 + FastAPI):** A lightning-fast extraction worker utilizing pypdf for document processing operations and pyodbc for direct multi-tenant transaction monitoring. Runs async handlers on **Port 8000**.
-3. **Database Grid (SQL Server 2022 Linux):** An enterprise-tier relational database system handling data multi-tenancy dynamically through data isolation strategies.
+| Service | Technology | Port | Purpose |
+|---------|-----------|------|---------|
+| **API Gateway** | .NET 10 Core | 5069 | Tenant management, user authentication, document uploads |
+| **Document Worker** | Python 3.12 + FastAPI | 8000 | PDF text extraction and processing |
+| **Database** | SQL Server 2022 | 1433 | Multi-tenant data storage with tenant isolation |
 
-## Security Infrastructure
+### Key Features
 
-- **Authentication:** Bearer JWT tokens evaluated using custom policy engines.
-- **API Documentation:** Custom BearerSecuritySchemeTransformer seamlessly integrated into a standalone, ultra-fast **Scalar UI documentation portal**.
-- **Data Isolation:** Hardened boundaries utilizing automated application query filters to guarantee tenants can never read or mutate overlapping data structures.
+- **Multi-Tenant Architecture**: Each tenant's data is automatically isolated at the database layer
+- **JWT Authentication**: Secure token-based API access with tenant context
+- **Document Processing**: Async PDF extraction with dedicated worker service
+- **API Documentation**: Interactive Swagger UI at `/scalar/v1`
+- **Data Persistence**: SQL Server with containerized volumes
 
-## Getting Started
+## Prerequisites
 
-### Prerequisites
+- Docker Desktop (running)
+- Git
+- PowerShell 5.1+ (Windows) or Bash (Linux/Mac)
 
-Ensure you have the following engine runtimes running locally:
-- Docker Desktop
-- Docker Compose v2
+## Quick Start
 
-### Quickstart Local Deployment
+### 1. Clone the Repository
+```bash
+git clone https://github.com/YOUR_USERNAME/EnterpriseIam.git
+cd EnterpriseIam
+```
 
-1. **Clone the repository:**
-   git clone https://github.com
-   cd YOUR_REPOSITORY_NAME
+### 2. Start the Stack
+```bash
+docker compose up -d --pull always
+```
 
-2. **Establish Environment Configurations:**
-   Create a local .env file in the root workspace folder to feed application strings safely to Docker:
-   MSSQL_SA_PASSWORD=YOUR_STRONG_PASSWORD_HERE
+This starts all three services automatically:
+- SQL Server database
+- .NET API Gateway
+- Python document worker
 
-3. **Orchestrate and Run:**
-   Execute the isolated cleaner build command directly within your shell window:
-   docker compose build --no-cache; docker compose up --build
+### 3. Verify Everything is Running
+```bash
+docker compose ps
+```
 
-### Exposed Operational Gateways
+All containers should show `Up` status.
 
-- Ingestion Gateway Dashboard (Scalar UI): http://localhost:5069/scalar/v1
-- FastAPI Processing Worker Tier: http://localhost:8000
-- Relational Database Node: localhost:1433
+## Using the API
+
+### Access the API Documentation
+Visit the interactive Swagger UI:
+```
+http://localhost:5069/scalar/v1
+```
+
+### Register a New Tenant
+```powershell
+curl -X POST "http://localhost:5069/api/auth/register-tenant" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "TenantName": "Acme Corp",
+    "AdminEmail": "admin@acme.local",
+    "Password": "SecurePass@123"
+  }'
+```
+
+### Login and Get JWT Token
+```powershell
+curl -X POST "http://localhost:5069/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "Email": "admin@acme.local",
+    "Password": "SecurePass@123"
+  }'
+```
+
+### Upload a PDF Document
+```powershell
+curl -X POST "http://localhost:5069/api/documents/upload" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@document.pdf"
+```
+
+## Available Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/auth/register-tenant` | POST | Register a new tenant and admin user |
+| `/api/auth/login` | POST | Authenticate and receive JWT token |
+| `/api/documents/upload` | POST | Upload and extract PDF documents |
+| `/openapi/v1.json` | GET | OpenAPI specification |
+| `/scalar/v1` | GET | Interactive API documentation |
+
+## Common Commands
+
+### View Service Logs
+```bash
+# View all logs
+docker compose logs -f
+
+# View specific service
+docker compose logs -f api-gateway
+docker compose logs -f document-worker
+docker compose logs -f database
+```
+
+### Stop the Stack
+```bash
+docker compose down
+```
+
+### Restart a Service
+```bash
+docker compose restart api-gateway
+```
+
+### View Database Records
+```bash
+docker exec enterprise_iam_db /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P YourStrong@Password123 \
+  -d EnterpriseIamDb -C \
+  -Q "SELECT * FROM Tenants"
+```
+
+## Project Structure
+
+```
+EnterpriseIam/
+├── WebAPI/                  # .NET 10 API Gateway
+│   ├── Controllers/         # API endpoints
+│   ├── Models/              # Request/response DTOs
+│   └── Program.cs           # Startup configuration
+├── DocumentWorker/          # Python FastAPI worker
+│   ├── app/                 # Application code
+│   ├── Dockerfile           # Container image
+│   └── requirements.txt      # Python dependencies
+├── Core/                    # Shared entities
+├── Infrastructure/          # Data access & services
+├── docker-compose.yml       # Multi-container setup
+└── README.md                # This file
+```
+
+## Database Schema
+
+### Tenants
+Stores each organization/customer
+```sql
+Id (GUID), Name (string), CreatedAtUtc (datetime)
+```
+
+### Users
+User accounts with tenant isolation
+```sql
+Id (GUID), TenantId (GUID), Email (string), PasswordHash (string), IsActive (bool)
+```
+
+### Documents
+Uploaded PDF files tracked by tenant
+```sql
+Id (GUID), TenantId (GUID), FileName (string), Status (string), UploadedAtUtc (datetime)
+```
+
+### ExtractedData
+Extraction results linked to documents
+```sql
+Id (GUID), DocumentId (GUID), RawText (nvarchar(MAX)), ProcessedAtUtc (datetime)
+```
+
+## Troubleshooting
+
+### Containers Won't Start
+```bash
+docker compose down
+docker compose up -d --pull always
+```
+
+### Database Connection Error
+```bash
+docker logs enterprise_iam_db
+```
+
+### API Gateway Not Responding
+```bash
+docker logs net10_api_gateway
+```
+
+### Document Worker Extraction Fails
+```bash
+docker logs fastapi_document_worker
+```
+
+### Port Already in Use
+Change ports in `docker-compose.yml`:
+```yaml
+ports:
+  - "5069:5069"  # Change first number to unused port
+```
+
+## Development
+
+### Building Local Images
+```bash
+docker compose build --no-cache
+```
+
+### Running with Live Logs
+```bash
+docker compose up
+```
+(Press `Ctrl+C` to stop)
+
+### Accessing Container Shell
+```bash
+docker exec -it net10_api_gateway /bin/bash
+docker exec -it fastapi_document_worker /bin/bash
+docker exec -it enterprise_iam_db /bin/bash
+```
+
+## Environment Variables
+
+Edit `docker-compose.yml` to customize:
+
+```yaml
+environment:
+  - ASPNETCORE_ENVIRONMENT=Development
+  - MSSQL_SA_PASSWORD=YourStrong@Password123
+```
+
+## License
+
+[Add your license here]
+
+## Support
+
+For issues, feature requests, or questions, please open an issue on GitHub.
